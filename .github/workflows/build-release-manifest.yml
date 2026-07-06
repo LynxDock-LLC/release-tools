@@ -1,0 +1,78 @@
+name: Build release manifest
+
+# Foundation CI: on a published GitHub Release (or a manual run), build and
+# validate releases.json and upload it as an artifact. It does NOT publish to
+# the website, touch other repos, or use secrets - that comes later.
+on:
+  release:
+    types: [published]
+  workflow_dispatch:
+    inputs:
+      channel:
+        description: "Override channel (nightly|alpha|beta|stable). Blank = infer from version."
+        required: false
+        default: ""
+      docs_url:
+        description: "docsUrl for the manifest"
+        required: false
+        default: "/docs/"
+      released:
+        description: "released flag (true|false)"
+        required: false
+        default: "true"
+
+permissions:
+  contents: read
+
+jobs:
+  manifest:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout release-tools
+        uses: actions/checkout@v4
+
+      - name: Setup Node 20
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+
+      - name: Prepare release payload
+        env:
+          # The published release object, serialized safely via toJSON.
+          RELEASE_JSON: ${{ toJSON(github.event.release) }}
+        run: |
+          if [ "${{ github.event_name }}" = "release" ]; then
+            echo "Using the published GitHub Release payload."
+            printf '%s' "$RELEASE_JSON" > release.json
+          else
+            echo "Manual run - using examples/github-release.json for a smoke test."
+            cp examples/github-release.json release.json
+          fi
+
+      - name: Build releases.json
+        run: |
+          ARGS="build release.json --output releases.json"
+          if [ -n "${{ github.event.inputs.channel }}" ]; then
+            ARGS="$ARGS --channel ${{ github.event.inputs.channel }}"
+          fi
+          if [ -n "${{ github.event.inputs.docs_url }}" ]; then
+            ARGS="$ARGS --docs ${{ github.event.inputs.docs_url }}"
+          fi
+          if [ -n "${{ github.event.inputs.released }}" ]; then
+            ARGS="$ARGS --released ${{ github.event.inputs.released }}"
+          fi
+          echo "release-tools $ARGS"
+          node src/cli.mjs $ARGS
+
+      - name: Validate releases.json
+        run: node src/cli.mjs validate releases.json
+
+      - name: Show manifest (log)
+        run: cat releases.json
+
+      - name: Upload releases.json artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: lynxdock-releases-json
+          path: releases.json
+          if-no-files-found: error

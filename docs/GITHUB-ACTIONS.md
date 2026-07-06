@@ -1,45 +1,59 @@
-# GitHub Actions (design - not implemented)
+# GitHub Actions
 
 ```
-GitHub Release ──▶ GitHub Action ──▶ release-tools ──▶ releases.json ──▶ Website
+GitHub Release ──▶ GitHub Action ──▶ release-tools ──▶ releases.json (artifact) ──▶ [future] Website
 ```
 
-## Intended workflow
+## The workflow: `build-release-manifest.yml`
 
-On `release: published`, a workflow would:
+**Implemented (foundation).** On a published GitHub Release - or a manual run -
+it builds and validates `releases.json` and uploads it as an artifact. It does
+**not** use secrets, commit to other repos, or publish to Cloudflare yet.
 
-1. Check out `release-tools`.
-2. Fetch the release JSON (the event payload already contains it, or
-   `gh release view <tag> --json ...`).
-3. Optionally fetch the `SHA256SUMS` asset.
-4. Run `release-tools build release.json --checksums SHA256SUMS --output releases.json`.
-5. Publish `releases.json` - commit it to the website repo (or upload to a
-   stable URL / release asset).
-6. The website rebuild (Cloudflare Pages) picks it up; the Download Center lights
-   up automatically.
+### Triggers
+- `release: [published]` - fires automatically when you publish a release.
+- `workflow_dispatch` - manual runs for smoke testing, with optional inputs:
+  `channel`, `docs_url`, `released`.
 
-## Sketch (illustrative only - do not enable yet)
+### Steps
+1. Checkout `release-tools`.
+2. Setup Node 20.
+3. **Prepare payload** - on a `release` event, the published release object
+   (`github.event.release`) is written to `release.json` via `toJSON`. On a
+   manual run, `examples/github-release.json` is used instead.
+4. **Build** - `node src/cli.mjs build release.json --output releases.json`
+   (plus `--channel/--docs/--released` when supplied by manual inputs).
+5. **Validate** - `node src/cli.mjs validate releases.json`.
+6. **Upload artifact** - named **`lynxdock-releases-json`**, containing
+   `releases.json`.
 
-```yaml
-name: publish-release
-on:
-  release:
-    types: [published]
-jobs:
-  manifest:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
-        with: { node-version: 20 }
-      - run: echo "$RELEASE_JSON" > release.json
-        env: { RELEASE_JSON: ${{ toJSON(github.event.release) }} }
-      - run: node src/cli.mjs build release.json --output releases.json
-      # - then commit/publish releases.json to the website
-```
+### Where `releases.json` appears
+As a **workflow artifact** on the run's summary page (Actions → the run →
+Artifacts → `lynxdock-releases-json`). Download it to inspect the manifest. It
+is not yet published anywhere public.
 
-## Why keep Actions out of Bootstrap
+## Manual test (no real release needed)
+Actions → **Build release manifest** → **Run workflow**. Leave inputs at their
+defaults (or set `channel`, `docs_url`, `released`). The run uses the bundled
+example payload and produces the artifact.
 
-Bootstrap is a pure compiler; giving it CI credentials and release-fetching
-logic would blur responsibilities. `release-tools` owns the CI surface so
-Bootstrap stays deterministic and offline-friendly.
+## How this will later connect to `lynxdock-website`
+Once the foundation is trusted, a follow-up adds a publish step that takes the
+validated `releases.json` and either:
+- commits it to `lynxdock-website/public/releases.json` (cross-repo token), or
+- uploads it to a stable URL / release asset the site reads.
+
+Cloudflare Pages then rebuilds and the Download Center enables itself - no code
+change. That step needs a scoped token (secret) and is intentionally **out of
+scope** for this milestone.
+
+## Optional future step: checksums
+If a `SHA256SUMS` asset is attached to the release, a step can download it and
+pass `--checksums SHA256SUMS` so the manifest carries real `sha256` values.
+Not enabled yet (keeps the foundation network- and secret-free).
+
+## What remains before production automation
+- A publish target for `releases.json` (website commit or hosted URL) + a
+  scoped token stored as a secret.
+- Checksum (and later signature) consumption in CI.
+- Guardrails: only publish for non-draft, non-prerelease as policy dictates.

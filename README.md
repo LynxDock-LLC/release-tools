@@ -57,6 +57,14 @@ Options: `--output`, `--checksums`, `--channel`, `--docs`, `--released`.
 See [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md) and
 [`docs/GITHUB-ACTIONS.md`](docs/GITHUB-ACTIONS.md).
 
+## CI
+
+A GitHub Action (`.github/workflows/build-release-manifest.yml`) runs on
+`release: published` (and manual `workflow_dispatch`). It builds and validates
+`releases.json` and uploads it as the **`lynxdock-releases-json`** artifact. It
+does not publish anywhere or use secrets yet - see
+[`docs/GITHUB-ACTIONS.md`](docs/GITHUB-ACTIONS.md).
+
 ## Ecosystem
 
 | Repo | Role |
