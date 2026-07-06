@@ -73,3 +73,15 @@ does not publish anywhere or use secrets yet - see
 | `bootstrap` | Compiler (spec → website/app assets) |
 | `release-tools` | **Publisher (GitHub Release → releases.json)** |
 | `website` | Renderer |
+
+## Related repositories
+
+Part of the LynxDock ecosystem (LynxDock LLC):
+
+- **gspec** - the specification (products, brand, design, release policy)
+- **lynxdock-bootstrap** - the compiler (spec -> website/app assets)
+- **release-tools** - the publisher (GitHub Release -> releases.json)
+- **lynxdock-website** - the public site (renders generated content)
+- **company** - organization documentation and operations
+
+Built for People. Not Platforms.
