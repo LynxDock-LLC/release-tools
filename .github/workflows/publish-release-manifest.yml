@@ -1,0 +1,92 @@
+name: Publish release manifest
+
+# The publish loop. On a published (non-draft) GitHub Release, build + validate
+# the manifest, run guardrails, then commit public/releases.json into the
+# website repo. Cloudflare Pages rebuilds and the Download Center updates itself.
+#
+# Requires a repo secret WEBSITE_PUBLISH_TOKEN: a GitHub App installation token
+# or fine-grained PAT with `contents: write` on LynxDock-LLC/lynxdock-website ONLY.
+on:
+  release:
+    types: [published]
+
+permissions:
+  contents: read   # GITHUB_TOKEN stays read-only; cross-repo push uses the secret
+
+jobs:
+  publish:
+    # Guardrail: never publish drafts.
+    if: ${{ github.event.release.draft == false }}
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout release-tools
+        uses: actions/checkout@v4
+
+      - name: Setup Node 20
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+
+      - name: Write release payload
+        env:
+          RELEASE_JSON: ${{ toJSON(github.event.release) }}
+        run: printf '%s' "$RELEASE_JSON" > release.json
+
+      - name: Fetch SHA256SUMS if present
+        run: |
+          URL=$(jq -r '[.assets[]? | select(.name | test("sha256sums"; "i")) | .browser_download_url][0] // ""' release.json)
+          if [ -n "$URL" ]; then
+            echo "Found checksums asset; downloading."
+            curl -fsSL "$URL" -o SHA256SUMS
+            echo "HAVE_SUMS=1" >> "$GITHUB_ENV"
+          else
+            echo "No SHA256SUMS asset; checksums will be blank."
+          fi
+
+      - name: Build manifest (guardrails via CLI)
+        run: |
+          ARGS="build release.json --output releases.json --released true --docs /docs/"
+          if [ "${HAVE_SUMS:-0}" = "1" ]; then
+            ARGS="$ARGS --checksums SHA256SUMS --require-checksums"
+          fi
+          echo "release-tools $ARGS"
+          node src/cli.mjs $ARGS   # fails on missing version / unknown or duplicate platform / missing checksums
+
+      - name: Validate manifest
+        run: node src/cli.mjs validate releases.json
+
+      - name: Guardrail - released must be true
+        run: |
+          if [ "$(jq -r .current.released releases.json)" != "true" ]; then
+            echo "Refusing to publish: current.released is not true."; exit 1
+          fi
+
+      - name: Checkout website
+        uses: actions/checkout@v4
+        with:
+          repository: LynxDock-LLC/lynxdock-website
+          token: ${{ secrets.WEBSITE_PUBLISH_TOKEN }}
+          path: website
+
+      - name: Guardrail - no duplicate version
+        run: |
+          NEW=$(jq -r .current.version releases.json)
+          if [ -f website/public/releases.json ]; then
+            OLD=$(jq -r '.current.version // ""' website/public/releases.json)
+            if [ "$NEW" = "$OLD" ]; then
+              echo "Refusing to publish: version $NEW is already the published manifest."; exit 1
+            fi
+          fi
+
+      - name: Update website manifest
+        run: cp releases.json website/public/releases.json
+
+      - name: Commit and push to website
+        run: |
+          cd website
+          VER=$(jq -r .current.version public/releases.json)
+          git config user.name "lynxdock-release-bot"
+          git config user.email "release-bot@lynxdock.app"
+          git add public/releases.json
+          git commit -m "Update releases.json for v${VER}"
+          git push

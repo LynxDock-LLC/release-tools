@@ -18,6 +18,7 @@ Options (build):
   --channel <id>        Override channel (nightly|alpha|beta|stable)
   --docs <url>          docsUrl for the manifest (default: /docs/)
   --released <bool>     Override released flag (default: true)
+  --require-checksums   Fail if any available download lacks a sha256
   -h, --help            Show this help
 `;
 
@@ -26,8 +27,12 @@ function parseArgs(argv) {
   for (let i = 0; i < argv.length; i++) {
     const a = argv[i];
     if (a === "-h" || a === "--help") args.help = true;
-    else if (a.startsWith("--")) args[a.slice(2)] = argv[++i];
-    else args._.push(a);
+    else if (a.startsWith("--")) {
+      const key = a.slice(2);
+      const next = argv[i + 1];
+      if (next === undefined || next.startsWith("--")) args[key] = true;
+      else { args[key] = next; i++; }
+    } else args._.push(a);
   }
   return args;
 }
@@ -63,6 +68,7 @@ function cmdBuild(args) {
     docsUrl: args.docs || "/docs/",
     channel: args.channel,
     released: args.released === undefined ? true : args.released !== "false",
+    requireChecksums: args["require-checksums"] === true || args["require-checksums"] === "true",
   });
   if (errors.length) fail("build: invalid release input", errors);
 

@@ -32,3 +32,12 @@ test("schema validation passes a good manifest", () => {
   const { manifest } = buildManifest({ ...base, assets: [{ filename: "a.exe", url: "u" }] });
   assert.deepEqual(validateManifest(manifest), []);
 });
+
+import { readFileSync } from "node:fs";
+import { fromGitHubRelease } from "../src/parse.mjs";
+
+test("require-checksums errors when a checksum is missing", () => {
+  const rel = JSON.parse(readFileSync("examples/github-release.json", "utf8"));
+  const { errors } = buildManifest(fromGitHubRelease(rel), { requireChecksums: true });
+  assert.ok(errors.some((e) => /checksum/.test(e)));
+});

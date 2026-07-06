@@ -41,6 +41,13 @@ export function buildManifest(parsed, opts = {}) {
     (x, y) => PLATFORM_ORDER.indexOf(x.platform) - PLATFORM_ORDER.indexOf(y.platform)
   );
 
+  if (opts.requireChecksums) {
+    for (const d of downloads) {
+      if (d.available && !d.sha256)
+        errors.push(`missing checksum for '${d.filename}' (--require-checksums)`);
+    }
+  }
+
   const manifest = {
     current: {
       version: parsed.version,
