@@ -1,0 +1,45 @@
+{
+  "current": {
+    "version": "0.1.0-alpha",
+    "channel": "alpha",
+    "released": true,
+    "releaseDate": "2026-08-01",
+    "notesUrl": "https://github.com/LynxDock-LLC/lynxdock/releases/tag/v0.1.0-alpha",
+    "githubUrl": "https://github.com/LynxDock-LLC/lynxdock",
+    "docsUrl": "/docs/"
+  },
+  "downloads": [
+    {
+      "platform": "windows",
+      "filename": "LynxDockSetup.exe",
+      "url": "https://github.com/LynxDock-LLC/lynxdock/releases/download/v0.1.0-alpha/LynxDockSetup.exe",
+      "size": "12.4 MB",
+      "sha256": "",
+      "available": true
+    },
+    {
+      "platform": "linux",
+      "filename": "LynxDock.AppImage",
+      "url": "https://github.com/LynxDock-LLC/lynxdock/releases/download/v0.1.0-alpha/LynxDock.AppImage",
+      "size": "14.3 MB",
+      "sha256": "",
+      "available": true
+    },
+    {
+      "platform": "macos",
+      "filename": "LynxDock.dmg",
+      "url": "https://github.com/LynxDock-LLC/lynxdock/releases/download/v0.1.0-alpha/LynxDock.dmg",
+      "size": "15.3 MB",
+      "sha256": "",
+      "available": true
+    },
+    {
+      "platform": "server",
+      "filename": "lynxdock-server.tar.gz",
+      "url": "https://github.com/LynxDock-LLC/lynxdock/releases/download/v0.1.0-alpha/lynxdock-server.tar.gz",
+      "size": "7.6 MB",
+      "sha256": "",
+      "available": true
+    }
+  ]
+}

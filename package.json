@@ -1,0 +1,15 @@
+{
+  "name": "@lynxdock/release-tools",
+  "version": "0.1.0",
+  "description": "Turns a GitHub Release into the LynxDock releases.json manifest.",
+  "type": "module",
+  "license": "MIT",
+  "bin": { "release-tools": "src/cli.mjs" },
+  "engines": { "node": ">=20" },
+  "scripts": {
+    "build": "node src/cli.mjs build examples/github-release.json",
+    "test": "node --test",
+    "lint": "node scripts/lint.mjs"
+  },
+  "files": ["src", "docs", "README.md", "CHANGELOG.md", "LICENSE"]
+}

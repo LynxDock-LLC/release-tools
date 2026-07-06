@@ -1,0 +1,14 @@
+{
+  "tag_name": "v0.1.0-alpha",
+  "name": "LynxDock 0.1.0-alpha",
+  "prerelease": true,
+  "published_at": "2026-08-01T12:00:00Z",
+  "html_url": "https://github.com/LynxDock-LLC/lynxdock/releases/tag/v0.1.0-alpha",
+  "assets": [
+    { "name": "LynxDockSetup.exe", "browser_download_url": "https://github.com/LynxDock-LLC/lynxdock/releases/download/v0.1.0-alpha/LynxDockSetup.exe", "size": 13000000 },
+    { "name": "LynxDock.AppImage", "browser_download_url": "https://github.com/LynxDock-LLC/lynxdock/releases/download/v0.1.0-alpha/LynxDock.AppImage", "size": 15000000 },
+    { "name": "LynxDock.dmg", "browser_download_url": "https://github.com/LynxDock-LLC/lynxdock/releases/download/v0.1.0-alpha/LynxDock.dmg", "size": 16000000 },
+    { "name": "lynxdock-server.tar.gz", "browser_download_url": "https://github.com/LynxDock-LLC/lynxdock/releases/download/v0.1.0-alpha/lynxdock-server.tar.gz", "size": 8000000 },
+    { "name": "SHA256SUMS", "browser_download_url": "https://github.com/LynxDock-LLC/lynxdock/releases/download/v0.1.0-alpha/SHA256SUMS", "size": 400 }
+  ]
+}
